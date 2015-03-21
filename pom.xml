@@ -4,7 +4,7 @@
 
     <groupId>com.michael</groupId>
     <artifactId>poi-utils</artifactId>
-    <version>0.1</version>
+    <version>0.1-beta</version>
     <packaging>jar</packaging>
 
     <name>poi-utils</name>
