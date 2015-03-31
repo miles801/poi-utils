@@ -81,7 +81,7 @@ public class ImportEngine {
                     Object cellValue = null;
                     int cellType = cell.getCellType();
                     if (cellType == Cell.CELL_TYPE_NUMERIC) {
-                        cellValue = cell.getNumericCellValue() + "";
+                        cellValue = cell.getNumericCellValue();
                     } else if (cellType == Cell.CELL_TYPE_STRING) {
                         cellValue = cell.getStringCellValue();
                     } else if (cellType == Cell.CELL_TYPE_BLANK) {
