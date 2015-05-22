@@ -4,7 +4,7 @@
 
     <groupId>com.michael</groupId>
     <artifactId>poi-utils</artifactId>
-    <version>0.1-beta</version>
+    <version>0.1.1</version>
     <packaging>jar</packaging>
 
     <name>poi-utils</name>
@@ -45,5 +45,10 @@
             <version>3.9</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.2.4</version>
+        </dependency>
     </dependencies>
 </project>
