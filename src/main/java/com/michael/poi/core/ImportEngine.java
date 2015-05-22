@@ -1,9 +1,9 @@
 package com.michael.poi.core;
 
-import com.michael.poi.annotation.Col;
-import com.michael.poi.annotation.FieldConvert;
-import com.michael.poi.annotation.ImportConfig;
-import com.michael.poi.utils.ReflectUtils;
+import com.michael.poi.exceptions.ImportConfigException;
+import com.michael.poi.imp.cfg.ColMapping;
+import com.michael.poi.imp.cfg.Configuration;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -13,6 +13,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -21,98 +22,150 @@ import java.util.List;
  * @author Michael
  */
 public class ImportEngine {
-    private Class<?> clazz;
-    private Handler handler;
 
-    public ImportEngine(Class<? extends DTO> clazz, Handler handler) {
-        this.clazz = clazz;
-        this.handler = handler;
+    private Configuration configuration;
+
+
+    /**
+     * 使用配置对象初始化引擎
+     *
+     * @param configuration 配置对象
+     */
+    public ImportEngine(Configuration configuration) {
+        this.configuration = configuration;
     }
 
     public void execute() {
-        ImportConfig config = clazz.getAnnotation(ImportConfig.class);
         // 获得文件路径
-        String filePath = config.file();
+        String filePath = configuration.getPath();
         // 获得工作表
-        int[] sheets = config.sheets();
+        List<Integer> sheets = configuration.getSheets();
+
         // 获得起始行
-        int startRow = config.startRow();
+        int startRow = configuration.getStartRow();
 
+        Class<? extends DTO> targetClass = configuration.getClazz();
 
-        // 获得所有具有ColIndex的属性
-        Context context = new Context();
-        List<Field> fields = ReflectUtils.searchAnnotationFields(clazz, Col.class);
+        // 获得映射
+        List<ColMapping> mappings = configuration.getMappings();
 
-        Workbook workbook = null;
-        try {
-            workbook = new XSSFWorkbook(new FileInputStream(filePath));
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw new RuntimeException("没有找到文件：" + filePath);
+        Handler handler = configuration.getHandler();
+        if (handler == null) {
+            throw new ImportConfigException("没有注册处理器!");
         }
+
+        // 上下文对象
+        Context context = new Context();
+
+        Workbook workbook = getWorkbook(filePath);
+        int sheetCount = workbook.getNumberOfSheets();
         context.setWorkbook(workbook);
-        for (int i = 0; i < sheets.length; i++) {
-            Sheet sheet = workbook.getSheetAt(sheets[i]);
-            int rows = sheet.getLastRowNum() + 1;
+        sheets = initSheetList(sheets, sheetCount);
+        for (Integer i : sheets) {
+            Sheet sheet = workbook.getSheetAt(i);
             context.setSheet(sheet);
             context.setSheetIndex(i);
-            for (int j = startRow; j < rows; j++) {
+
+            int lastRowNum = sheet.getLastRowNum() + 1;
+            if (lastRowNum < startRow) {
+                throw new ImportConfigException("起始行超出最大行的索引!");
+            }
+
+            for (int j = startRow; j < lastRowNum; j++) {
                 // 读取具体的单元格
                 Row row = sheet.getRow(j);
                 context.setRow(row);
                 context.setRowIndex(j);
-                DTO instance = null;
+                DTO targetInstance = null;
                 try {
-                    instance = (DTO) clazz.newInstance();
+                    targetInstance = targetClass.newInstance();
                 } catch (InstantiationException e) {
                     e.printStackTrace();
                 } catch (IllegalAccessException e) {
                     e.printStackTrace();
                 }
-                for (Field field : fields) {
-                    Col col = field.getAnnotation(Col.class);
-                    Cell cell = row.getCell(col.index());
+                if (targetInstance == null) {
+                    throw new ImportConfigException("初始化目标类[" + targetClass.getName() + "]失败!");
+                }
+
+                for (ColMapping colMapping : mappings) {
+                    int index = colMapping.getIndex();
+                    Cell cell = row.getCell(index);
+                    context.setCell(cell);
+                    context.setCellIndex(index);
+
                     if (cell == null) {
-                        if (col.required()) {
-                            throw new RuntimeException("单元格内容缺失!工作表[" + sheet.getSheetName() + "],第[" + (j + 1) + "]行[" + (col.index() + 1) + "]列!");
+                        if (colMapping.getRequired()) {
+                            throw new RuntimeException("单元格内容缺失!工作表[" + sheet.getSheetName() + "],第[" + (j + 1) + "]行[" + (index + 1) + "]列!");
                         }
                         continue;
                     }
-                    Object cellValue = null;
-                    int cellType = cell.getCellType();
-                    if (cellType == Cell.CELL_TYPE_NUMERIC) {
-                        cellValue = cell.getNumericCellValue();
-                    } else if (cellType == Cell.CELL_TYPE_STRING) {
-                        cellValue = cell.getStringCellValue();
-                    } else if (cellType == Cell.CELL_TYPE_BLANK) {
-                        cellValue = "";
-                    } else if (cellType == Cell.CELL_TYPE_BOOLEAN) {
-                        cellValue = cell.getBooleanCellValue();
-                    } else {
-                        throw new RuntimeException("不支持的格式-->" + cellType + "!");
-                    }
-                    context.setCell(cell);
-                    context.setCellIndex(col.index());
-                    // 包含转换器
-                    field.setAccessible(true);
-                    FieldConvert fieldConvert = field.getAnnotation(FieldConvert.class);
+                    Object cellValue = getCellValue(cell);
+                    String fieldName = colMapping.getColName();
                     try {
-                        if (fieldConvert != null) {
-                            Class<? extends Converter> converter = fieldConvert.convertorClass();
-                            Object value = converter.newInstance().execute(instance, cellValue, context);
-                            field.set(instance, value);
-                        } else {
-                            field.set(instance, cellValue);
-                        }
-                    } catch (InstantiationException e) {
-                        e.printStackTrace();
+                        Field field = targetClass.getDeclaredField(fieldName);
+                        field.setAccessible(true);
+                        // TODO 是否进行转换
+                        field.set(targetInstance, cellValue);
+                    } catch (NoSuchFieldException e) {
+                        throw new ImportConfigException(String.format("类[%s]中不存在属性[%s]", targetClass.getName(), fieldName));
                     } catch (IllegalAccessException e) {
                         e.printStackTrace();
                     }
+
+                    handler.execute(targetInstance);
                 }
-                // 到这里instance就包装完成了
-                handler.execute(instance);
+
             }
         }
+    }
+
+    private Object getCellValue(Cell cell) {
+        Object cellValue = null;
+        int cellType = cell.getCellType();
+        if (cellType == Cell.CELL_TYPE_NUMERIC) {
+            cellValue = cell.getNumericCellValue();
+        } else if (cellType == Cell.CELL_TYPE_STRING) {
+            cellValue = cell.getStringCellValue();
+        } else if (cellType == Cell.CELL_TYPE_BLANK) {
+            cellValue = "";
+        } else if (cellType == Cell.CELL_TYPE_BOOLEAN) {
+            cellValue = cell.getBooleanCellValue();
+        } else {
+            throw new RuntimeException("不支持的格式-->" + cellType + "!");
+        }
+        return cellValue;
+    }
+
+
+    private List<Integer> initSheetList(List<Integer> sheets, int sheetCount) {
+        if (sheets == null) {
+            sheets = new ArrayList<Integer>();
+            for (int i = 0; i < sheetCount; i++) {
+                sheets.add(i);
+            }
+        }
+        return sheets;
+    }
+
+    /**
+     * 根据文件路径获得Workbook对象
+     *
+     * @param filePath 文件路径
+     */
+    private Workbook getWorkbook(String filePath) {
+        Workbook workbook = null;
+        try {
+            if (filePath.endsWith(".xls")) {
+                workbook = new HSSFWorkbook(new FileInputStream(filePath));
+            } else if (filePath.endsWith(".xlsx")) {
+                workbook = new XSSFWorkbook(new FileInputStream(filePath));
+            } else {
+                throw new ImportConfigException("不支持的文件格式!" + filePath);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return workbook;
     }
 }
