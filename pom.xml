@@ -4,7 +4,7 @@
 
     <groupId>com.michael</groupId>
     <artifactId>poi-utils</artifactId>
-    <version>0.1.1</version>
+    <version>1.0</version>
     <packaging>jar</packaging>
 
     <name>poi-utils</name>
@@ -12,7 +12,7 @@
 
     <description>
         <![CDATA[
-            利用POI实现的导入导出工具包
+            利用POI实现的导入导出工具包，提供基本的导入导出功能
         ]]>
     </description>
     <properties>
