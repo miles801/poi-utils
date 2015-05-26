@@ -95,7 +95,7 @@ public class ImportEngine {
                     context.setCellIndex(index);
 
                     if (cell == null) {
-                        if (colMapping.getRequired()) {
+                        if (colMapping.getRequired() != null && colMapping.getRequired()) {
                             throw new RuntimeException("单元格内容缺失!工作表[" + sheet.getSheetName() + "],第[" + (j + 1) + "]行[" + (index + 1) + "]列!");
                         }
                         continue;
@@ -112,9 +112,8 @@ public class ImportEngine {
                     } catch (IllegalAccessException e) {
                         e.printStackTrace();
                     }
-
-                    handler.execute(targetInstance);
                 }
+                handler.execute(targetInstance);
 
             }
         }

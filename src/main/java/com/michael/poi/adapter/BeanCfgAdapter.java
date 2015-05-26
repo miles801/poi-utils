@@ -2,6 +2,7 @@ package com.michael.poi.adapter;
 
 import com.michael.poi.core.DTO;
 import com.michael.poi.core.Handler;
+import com.michael.poi.exceptions.ImportConfigException;
 import com.michael.poi.imp.cfg.Configuration;
 
 /**
@@ -12,10 +13,21 @@ public class BeanCfgAdapter extends Configuration implements Adapter {
     private String handlerClass;
 
     @Override
+    @SuppressWarnings("unchecked")
     public Configuration parse() {
         try {
-            setClazz((Class<? extends DTO>) Class.forName(targetClass));
-            setHandler((Handler) Class.forName(handlerClass).newInstance());
+            if (getClazz() == null) {
+                if (targetClass == null) {
+                    throw new ImportConfigException("配置错误!没有指定目标对象类!");
+                }
+                setClazz((Class<? extends DTO>) Class.forName(targetClass));
+            }
+            if (getHandler() == null) {
+                if (handlerClass == null) {
+                    throw new ImportConfigException("配置错误!没有指定结果处理类!");
+                }
+                setHandler((Handler) Class.forName(handlerClass).newInstance());
+            }
         } catch (InstantiationException e) {
             e.printStackTrace();
         } catch (IllegalAccessException e) {
