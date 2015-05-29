@@ -3,11 +3,9 @@ package com.michael.poi.core;
 import com.michael.poi.exceptions.ImportConfigException;
 import com.michael.poi.imp.cfg.ColMapping;
 import com.michael.poi.imp.cfg.Configuration;
+import com.michael.poi.utils.CellUtils;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.FileInputStream;
@@ -100,7 +98,7 @@ public class ImportEngine {
                         }
                         continue;
                     }
-                    Object cellValue = getCellValue(cell);
+                    Object cellValue = CellUtils.getCellRealValue(cell);
                     String fieldName = colMapping.getColName();
                     try {
                         Field field = targetClass.getDeclaredField(fieldName);
@@ -123,7 +121,11 @@ public class ImportEngine {
         Object cellValue = null;
         int cellType = cell.getCellType();
         if (cellType == Cell.CELL_TYPE_NUMERIC) {
-            cellValue = cell.getNumericCellValue();
+            if (DateUtil.isCellDateFormatted(cell)) {   // 是否为日期
+                cellValue = DateUtil.getJavaDate(cell.getNumericCellValue());
+            } else {
+                cellValue = cell.getNumericCellValue();
+            }
         } else if (cellType == Cell.CELL_TYPE_STRING) {
             cellValue = cell.getStringCellValue();
         } else if (cellType == Cell.CELL_TYPE_BLANK) {
@@ -131,7 +133,7 @@ public class ImportEngine {
         } else if (cellType == Cell.CELL_TYPE_BOOLEAN) {
             cellValue = cell.getBooleanCellValue();
         } else {
-            throw new RuntimeException("不支持的格式-->" + cellType + "!");
+            throw new RuntimeException(String.format("不支持的单元格类型[%d]!发生在%d行%d列", cellType, cell.getRowIndex(), cell.getColumnIndex()));
         }
         return cellValue;
     }
