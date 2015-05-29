@@ -65,6 +65,9 @@ public class ImportEngine {
             context.setSheetIndex(i);
 
             int lastRowNum = sheet.getLastRowNum() + 1;
+            if (lastRowNum == 1) {  // 空sheet
+                continue;
+            }
             if (lastRowNum < startRow) {
                 throw new ImportConfigException("起始行超出最大行的索引!");
             }
