@@ -15,9 +15,6 @@ public class ColMapping {
     // 是否必须
     private Boolean required;
 
-    // 列的类型
-    private String type;
-
     // 转化器
     private Converter converter;
 
@@ -44,14 +41,6 @@ public class ColMapping {
 
     public void setRequired(Boolean required) {
         this.required = required;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
     }
 
     public Converter getConverter() {
