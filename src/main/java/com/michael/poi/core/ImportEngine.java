@@ -4,6 +4,7 @@ import com.michael.poi.exceptions.ImportConfigException;
 import com.michael.poi.imp.cfg.ColMapping;
 import com.michael.poi.imp.cfg.Configuration;
 import com.michael.poi.utils.CellUtils;
+import com.michael.poi.utils.TypeUtils;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -102,11 +103,21 @@ public class ImportEngine {
                         continue;
                     }
                     Object cellValue = CellUtils.getCellRealValue(cell);
+                    // 跳过空值
+                    if (cellValue == null) {
+                        continue;
+                    }
+
                     String fieldName = colMapping.getColName();
                     try {
                         Field field = targetClass.getDeclaredField(fieldName);
                         field.setAccessible(true);
-                        // TODO 是否进行转换
+
+                        Class<?> fieldClass = field.getType();
+                        // 如果两者类型不同，则进行转换
+                        if (!cellValue.getClass().isAssignableFrom(fieldClass)) {
+                            cellValue = TypeUtils.convertValueType(cellValue, fieldClass);
+                        }
                         field.set(targetInstance, cellValue);
                     } catch (NoSuchFieldException e) {
                         throw new ImportConfigException(String.format("类[%s]中不存在属性[%s]", targetClass.getName(), fieldName));
@@ -119,6 +130,7 @@ public class ImportEngine {
             }
         }
     }
+
 
     private Object getCellValue(Cell cell) {
         Object cellValue = null;
