@@ -4,7 +4,7 @@
 
     <groupId>com.michael</groupId>
     <artifactId>poi-utils</artifactId>
-    <version>1.1-alph</version>
+    <version>1.1</version>
     <packaging>jar</packaging>
 
     <name>poi-utils</name>
@@ -13,6 +13,10 @@
     <description>
         <![CDATA[
             利用POI实现的导入导出工具包，提供基本的导入导出功能
+            --------------------------------------------
+            v1.1
+                + 新增支持配置对象的导入方式（原来只支持注解）
+                + 新增类型自动匹配: 当excel的格式与目标类型不匹配是自动转换
         ]]>
     </description>
     <properties>
