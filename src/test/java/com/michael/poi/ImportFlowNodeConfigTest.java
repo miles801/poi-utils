@@ -1,8 +1,15 @@
 package com.michael.poi;
 
+import com.michael.poi.adapter.AnnotationCfgAdapter;
+import com.michael.poi.adapter.BeanCfgAdapter;
 import com.michael.poi.core.ImportEngine;
+import com.michael.poi.imp.cfg.ColMapping;
+import com.michael.poi.imp.cfg.Configuration;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 导入流程节点配置
@@ -26,7 +33,41 @@ public class ImportFlowNodeConfigTest {
 
     @Test
     public void testImport() throws Exception {
-        ImportEngine importEngine = new ImportEngine(FlowNodeDTO.class, new FlowNodeSaveHandler());
+        AnnotationCfgAdapter adapter = new AnnotationCfgAdapter(FlowNodeDTO.class);
+        Configuration configuration = adapter.parse();
+        configuration.setHandler(new FlowNodeSaveHandler());
+        ImportEngine importEngine = new ImportEngine(configuration);
+        importEngine.execute();
+    }
+
+    @Test
+    public void testImport2() throws Exception {
+        BeanCfgAdapter adapter = new BeanCfgAdapter();
+        adapter.setTargetClass(FlowNodeDTO.class.getName());
+        adapter.setHandlerClass(FlowNodeSaveHandler.class.getName());
+        adapter.setStartRow(1);
+        adapter.setPath("D:\\workspace\\michael\\poi-utils\\src\\test\\resources\\客诉服务平台流程节点配置_20150321.xlsx");
+
+        List<ColMapping> colMappings = new ArrayList<ColMapping>();
+        ColMapping flowIdCol = new ColMapping();
+        flowIdCol.setIndex(0);
+        flowIdCol.setColName("flowId");
+        colMappings.add(flowIdCol);
+
+        ColMapping nodeCol = new ColMapping();
+        nodeCol.setIndex(1);
+        nodeCol.setColName("nodeName");
+        colMappings.add(nodeCol);
+
+        ColMapping roleCol = new ColMapping();
+        roleCol.setIndex(2);
+        roleCol.setColName("roleName");
+        colMappings.add(roleCol);
+
+        adapter.setMappings(colMappings);
+        Configuration configuration = adapter.parse();
+        configuration.setHandler(new FlowNodeSaveHandler());
+        ImportEngine importEngine = new ImportEngine(configuration);
         importEngine.execute();
     }
 
