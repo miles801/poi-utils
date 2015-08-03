@@ -56,6 +56,8 @@ public class ImportEngine {
         // 上下文对象
         Context context = new Context();
 
+        RuntimeContext.set(context);
+
         Workbook workbook = getWorkbook(filePath);
         int sheetCount = workbook.getNumberOfSheets();
         context.setWorkbook(workbook);
@@ -118,6 +120,15 @@ public class ImportEngine {
                         if (!cellValue.getClass().isAssignableFrom(fieldClass)) {
                             cellValue = TypeUtils.convertValueType(cellValue, fieldClass);
                         }
+
+                        // 类型转换
+                        Converter converter = colMapping.getConverter();
+                        if (converter != null) {
+                            Object fooValue = converter.execute(targetInstance, cellValue);
+                            if (fooValue != null) {
+                                cellValue = fooValue;
+                            }
+                        }
                         field.set(targetInstance, cellValue);
                     } catch (NoSuchFieldException e) {
                         throw new ImportConfigException(String.format("类[%s]中不存在属性[%s]", targetClass.getName(), fieldName));
@@ -129,6 +140,9 @@ public class ImportEngine {
 
             }
         }
+
+        // 清除运行时上下文
+        RuntimeContext.remove();
     }
 
 

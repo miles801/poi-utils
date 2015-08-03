@@ -1,7 +1,6 @@
 package com.michael.poi;
 
 import com.michael.poi.annotation.Col;
-import com.michael.poi.annotation.FieldConvert;
 import com.michael.poi.annotation.ImportConfig;
 import com.michael.poi.core.DTO;
 
@@ -16,25 +15,22 @@ import com.michael.poi.core.DTO;
         // 数据要从哪一行开始读取
         startRow = 1
 )
-public class FlowNodeDTO implements DTO{
+public class FlowNodeDTO implements DTO {
 
     @Col(index = 0)
     private String flowId;  // 值来自第一列
 
     @Col(index = 1)
-    @FieldConvert(convertorClass = NodeIdConverter.class)
     private String nodeName;    // 值来自第二列，并且需要进行转换
     private String nodeId;
 
     @Col(index = 2)
-    @FieldConvert(convertorClass = PositionIdConverter.class)
     private String roleName;// 岗位名称，来自第三列，并且需要进行转换
     private String roleId;  // 岗位ID
     @Col(index = 3)
     private String roleType;// 来自第四列
 
     @Col(index = 4)
-    @FieldConvert(convertorClass = ConditionConverter.class)
     private String condition;
 
 
