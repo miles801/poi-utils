@@ -12,12 +12,33 @@ import org.apache.poi.ss.usermodel.Workbook;
  */
 public class Context {
 
+    /**
+     * 当前工作簿
+     */
     private Workbook workbook;
+    /**
+     * 当前正在读取的单元表
+     */
     private Sheet sheet;
+    /**
+     * 当前正在读取的单元表的索引
+     */
     private int sheetIndex;
+    /**
+     * 当前正在读取的行
+     */
     private Row row;
+    /**
+     * 当前正在读取的行的索引
+     */
     private int rowIndex;
+    /**
+     * 当前正在读取的列
+     */
     private Cell cell;
+    /**
+     * 当前正在读取的列的索引
+     */
     private int cellIndex;
 
     public Workbook getWorkbook() {

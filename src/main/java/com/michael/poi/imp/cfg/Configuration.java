@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * 导入引擎的配置对象
+ *
  * @author Michael
  */
 public class Configuration {
