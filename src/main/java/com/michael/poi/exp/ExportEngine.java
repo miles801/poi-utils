@@ -21,7 +21,6 @@ import java.util.Set;
  * 1. 读取模板文件
  * 2. 加载数据
  * 3. 将数据应用到模板文件中
- *
  * @author Michael
  */
 public class ExportEngine {
@@ -64,10 +63,14 @@ public class ExportEngine {
                     int cellType = cell.getCellType();
                     if (cellType == Cell.CELL_TYPE_STRING) {
                         String value = cell.getStringCellValue();
+                        if (value == null || "".equals(value.trim())) {
+                            continue;
+                        }
+
                         char flag = value.charAt(0);
                         if (flag == '$') {
                             JsonElement o = data.get(value.substring(1));
-                            if (o == null) {
+                            if (o == null || o.isJsonNull()) {
                                 cell.setCellValue("");
                             } else {
                                 cell.setCellValue(o.getAsString());
