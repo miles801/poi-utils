@@ -78,6 +78,10 @@ public class ImportEngine {
             for (int j = startRow; j < lastRowNum; j++) {
                 // 读取具体的单元格
                 Row row = sheet.getRow(j);
+                // 跳过空行
+                if (row == null) {
+                    continue;
+                }
                 context.setRow(row);
                 context.setRowIndex(j);
                 DTO targetInstance = null;
