@@ -101,16 +101,20 @@ public class ImportEngine {
                     Cell cell = row.getCell(index);
                     context.setCell(cell);
                     context.setCellIndex(index);
-
+                    boolean isRequired = colMapping.getRequired() != null && colMapping.getRequired();
                     if (cell == null) {
-                        if (colMapping.getRequired() != null && colMapping.getRequired()) {
+                        if (isRequired) {
                             throw new RuntimeException("单元格内容缺失!工作表[" + sheet.getSheetName() + "],第[" + (j + 1) + "]行[" + (index + 1) + "]列!");
                         }
                         continue;
                     }
                     Object cellValue = CellUtils.getCellRealValue(cell);
+
                     // 跳过空值
-                    if (cellValue == null) {
+                    if (cellValue == null || cellValue.toString().trim().equals("")) {
+                        if (isRequired) {
+                            throw new RuntimeException("单元格内容缺失!工作表[" + sheet.getSheetName() + "],第[" + (j + 1) + "]行[" + (index + 1) + "]列!");
+                        }
                         continue;
                     }
 
@@ -120,10 +124,6 @@ public class ImportEngine {
                         field.setAccessible(true);
 
                         Class<?> fieldClass = field.getType();
-                        // 如果两者类型不同，则进行转换
-                        if (!cellValue.getClass().isAssignableFrom(fieldClass)) {
-                            cellValue = TypeUtils.convertValueType(cellValue, fieldClass);
-                        }
 
                         // 类型转换
                         Converter converter = colMapping.getConverter();
@@ -133,6 +133,12 @@ public class ImportEngine {
                                 cellValue = fooValue;
                             }
                         }
+                        // 如果两者类型不同，则进行转换
+                        if (!cellValue.getClass().isAssignableFrom(fieldClass)) {
+                            cellValue = TypeUtils.convertValueType(cellValue, fieldClass);
+                        }
+
+
                         field.set(targetInstance, cellValue);
                     } catch (NoSuchFieldException e) {
                         throw new ImportConfigException(String.format("类[%s]中不存在属性[%s]", targetClass.getName(), fieldName));

@@ -64,6 +64,6 @@ public class TypeUtils {
                 e.printStackTrace();
             }
         }
-        return null;
+        return cellValue;
     }
 }
