@@ -106,7 +106,6 @@ public class ImportEngine {
                         if (isRequired) {
                             throw new RuntimeException("单元格内容缺失!工作表[" + sheet.getSheetName() + "],第[" + (j + 1) + "]行[" + (index + 1) + "]列!");
                         }
-                        continue;
                     }
                     Object cellValue = CellUtils.getCellRealValue(cell);
 
@@ -115,7 +114,6 @@ public class ImportEngine {
                         if (isRequired) {
                             throw new RuntimeException("单元格内容缺失!工作表[" + sheet.getSheetName() + "],第[" + (j + 1) + "]行[" + (index + 1) + "]列!");
                         }
-                        continue;
                     }
 
                     String fieldName = colMapping.getColName();
@@ -132,6 +130,10 @@ public class ImportEngine {
                             if (fooValue != null) {
                                 cellValue = fooValue;
                             }
+                        }
+
+                        if (cellValue == null) {
+                            continue;
                         }
                         // 如果两者类型不同，则进行转换
                         if (!cellValue.getClass().isAssignableFrom(fieldClass)) {

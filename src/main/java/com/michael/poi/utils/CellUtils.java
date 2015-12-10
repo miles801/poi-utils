@@ -22,6 +22,9 @@ public class CellUtils {
      * @return String、Double、Integer、Boolean、Date类型的值
      */
     public static Object getCellRealValue(Cell cell) {
+        if (cell == null) {
+            return null;
+        }
         Object cellValue = null;
         int cellType = cell.getCellType();
         if (cellType == Cell.CELL_TYPE_NUMERIC) {
