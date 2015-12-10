@@ -1,5 +1,6 @@
 package com.michael.poi.core;
 
+import com.michael.poi.converter.PreRowConverter;
 import com.michael.poi.exceptions.ImportConfigException;
 import com.michael.poi.imp.cfg.ColMapping;
 import com.michael.poi.imp.cfg.Configuration;
@@ -74,6 +75,8 @@ public class ImportEngine {
             if (lastRowNum < startRow) {
                 throw new ImportConfigException("起始行超出最大行的索引!");
             }
+            context.setStartRow(startRow);
+            context.setEndRow(lastRowNum);
 
             for (int j = startRow; j < lastRowNum; j++) {
                 // 读取具体的单元格
@@ -84,34 +87,23 @@ public class ImportEngine {
                 }
                 context.setRow(row);
                 context.setRowIndex(j);
-                DTO targetInstance = null;
-                try {
-                    targetInstance = targetClass.newInstance();
-                } catch (InstantiationException e) {
-                    e.printStackTrace();
-                } catch (IllegalAccessException e) {
-                    e.printStackTrace();
-                }
-                if (targetInstance == null) {
-                    throw new ImportConfigException("初始化目标类[" + targetClass.getName() + "]失败!");
-                }
+
+                DTO targetInstance = initDto(targetClass);
 
                 for (ColMapping colMapping : mappings) {
                     int index = colMapping.getIndex();
                     Cell cell = row.getCell(index);
                     context.setCell(cell);
                     context.setCellIndex(index);
-                    boolean isRequired = colMapping.getRequired() != null && colMapping.getRequired();
-                    if (cell == null) {
-                        if (isRequired) {
-                            throw new RuntimeException("单元格内容缺失!工作表[" + sheet.getSheetName() + "],第[" + (j + 1) + "]行[" + (index + 1) + "]列!");
-                        }
-                    }
+                    boolean isRequired = colMapping.isRequired();
                     Object cellValue = CellUtils.getCellRealValue(cell);
 
-                    // 跳过空值
+                    // 跳过空值:跳过之前先判断是否读取前一行
                     if (cellValue == null || cellValue.toString().trim().equals("")) {
-                        if (isRequired) {
+                        if (colMapping.isPreRowIfNull()) {
+                            cellValue = PreRowConverter.getInstance().execute(targetInstance, null);
+                        }
+                        if (cellValue == null && isRequired) {
                             throw new RuntimeException("单元格内容缺失!工作表[" + sheet.getSheetName() + "],第[" + (j + 1) + "]行[" + (index + 1) + "]列!");
                         }
                     }
@@ -123,7 +115,7 @@ public class ImportEngine {
 
                         Class<?> fieldClass = field.getType();
 
-                        // 类型转换
+                        // 利用外部转化器转换值
                         Converter converter = colMapping.getConverter();
                         if (converter != null) {
                             Object fooValue = converter.execute(targetInstance, cellValue);
@@ -135,6 +127,7 @@ public class ImportEngine {
                         if (cellValue == null) {
                             continue;
                         }
+
                         // 如果两者类型不同，则进行转换
                         if (!cellValue.getClass().isAssignableFrom(fieldClass)) {
                             cellValue = TypeUtils.convertValueType(cellValue, fieldClass);
@@ -155,6 +148,21 @@ public class ImportEngine {
 
         // 清除运行时上下文
         RuntimeContext.remove();
+    }
+
+    private DTO initDto(Class<? extends DTO> targetClass) {
+        DTO targetInstance = null;
+        try {
+            targetInstance = targetClass.newInstance();
+        } catch (InstantiationException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
+        if (targetInstance == null) {
+            throw new ImportConfigException("初始化目标类[" + targetClass.getName() + "]失败!请保证该实体类具有一个无参构造方法!");
+        }
+        return targetInstance;
     }
 
 

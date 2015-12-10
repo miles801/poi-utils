@@ -32,6 +32,17 @@ public class Context {
      * 当前正在读取的行的索引
      */
     private int rowIndex;
+
+    /**
+     * 起始行
+     */
+    private int startRow;
+
+    /**
+     * 结束行
+     */
+    private int endRow;
+
     /**
      * 当前正在读取的列
      */
@@ -95,5 +106,21 @@ public class Context {
 
     public void setCellIndex(int cellIndex) {
         this.cellIndex = cellIndex;
+    }
+
+    public int getEndRow() {
+        return endRow;
+    }
+
+    public void setEndRow(int endRow) {
+        this.endRow = endRow;
+    }
+
+    public int getStartRow() {
+        return startRow;
+    }
+
+    public void setStartRow(int startRow) {
+        this.startRow = startRow;
     }
 }

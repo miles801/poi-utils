@@ -15,7 +15,10 @@ public class ColMapping {
     private String colName;
 
     // 是否必须，如果设置为true，那么在读取的时候发现该单元格为空则会抛出异常
-    private Boolean required;
+    private boolean required;
+
+    // 是否读取上一行，当当前单元格内容为空时，考虑是否需要读取上一行的单元格的数据
+    private boolean preRowIfNull;
 
     // 转化器，可以对该列进行转换
     private Converter converter;
@@ -37,12 +40,20 @@ public class ColMapping {
         this.colName = colName;
     }
 
-    public Boolean getRequired() {
+    public boolean isRequired() {
         return required;
     }
 
-    public void setRequired(Boolean required) {
+    public void setRequired(boolean required) {
         this.required = required;
+    }
+
+    public boolean isPreRowIfNull() {
+        return preRowIfNull;
+    }
+
+    public void setPreRowIfNull(boolean preRowIfNull) {
+        this.preRowIfNull = preRowIfNull;
     }
 
     public Converter getConverter() {
