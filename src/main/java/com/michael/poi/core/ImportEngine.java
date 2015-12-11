@@ -89,7 +89,7 @@ public class ImportEngine {
                 context.setRowIndex(j);
 
                 DTO targetInstance = initDto(targetClass);
-
+                boolean hasData = true;
                 for (ColMapping colMapping : mappings) {
                     int index = colMapping.getIndex();
                     Cell cell = row.getCell(index);
@@ -104,6 +104,12 @@ public class ImportEngine {
                             cellValue = PreRowConverter.getInstance().execute(targetInstance, null);
                         }
                         if (cellValue == null && isRequired) {
+                            // 如果所有同一行所有的单元格都是空的，那么则跳过
+                            boolean isEmptyRow = isNullRow(row);
+                            if (isEmptyRow) {
+                                hasData = false;
+                                break;
+                            }
                             throw new RuntimeException("单元格内容缺失!工作表[" + sheet.getSheetName() + "],第[" + (j + 1) + "]行[" + (index + 1) + "]列!");
                         }
                     }
@@ -141,13 +147,36 @@ public class ImportEngine {
                         e.printStackTrace();
                     }
                 }
-                handler.execute(targetInstance);
+                if (hasData) {
+                    handler.execute(targetInstance);
+                }
 
             }
         }
 
         // 清除运行时上下文
         RuntimeContext.remove();
+    }
+
+    /**
+     * 判断一行中的所有单元格是不是全部空的
+     *
+     * @param row
+     * @return true空行、false不是空行
+     */
+    private boolean isNullRow(Row row) {
+        if (row == null) {
+            return true;
+        }
+        int start = row.getFirstCellNum();
+        int end = row.getLastCellNum();
+        for (; start < end; start++) {
+            Cell foo = row.getCell(start);
+            if (foo != null && foo.getStringCellValue() != null && !"".equals(foo.getStringCellValue())) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private DTO initDto(Class<? extends DTO> targetClass) {
