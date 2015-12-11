@@ -43,8 +43,10 @@ public class CellUtils {
             cellValue = null;
         } else if (cellType == Cell.CELL_TYPE_BOOLEAN) {
             cellValue = cell.getBooleanCellValue();
+        } else if (cellType == Cell.CELL_TYPE_FORMULA) {    // 公式，直接返回字符串类型的值
+            cellValue = cell.getStringCellValue();
         } else {
-            throw new RuntimeException("不支持的格式-->" + cellType + "!");
+            cellValue = cell.getStringCellValue();
         }
         return cellValue;
     }
