@@ -4,6 +4,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import org.apache.log4j.Logger;
+import org.apache.poi.POIXMLException;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -71,7 +73,12 @@ public class ExportEngine {
             IOUtils.copy(templateStream, new FileOutputStream(tmpFile));
 
             // 从临时文件中读取模板内容
-            Workbook workbook = new XSSFWorkbook(new FileInputStream(tmpFile));
+            Workbook workbook = null;
+            try {
+                workbook = new XSSFWorkbook(new FileInputStream(tmpFile));
+            } catch (POIXMLException e) {
+                workbook = new HSSFWorkbook(new FileInputStream(tmpFile));
+            }
 
             writeData(workbook, batchData);
 
@@ -156,16 +163,24 @@ public class ExportEngine {
             }
             JsonObject jo = arr.get(batch++).getAsJsonObject();
             Row newRow = sheet.createRow(rowIndex + i + 1);
-            newRow.setRowStyle(row.getRowStyle());
+            if (row.getRowStyle() != null) {
+                newRow.setRowStyle(row.getRowStyle());
+            }
             for (Map.Entry<Integer, String> entry : keyMap.entrySet()) {
                 int cellIndex = entry.getKey();
                 String keyValue = entry.getValue();
                 Cell newCell = newRow.createCell(cellIndex);
                 newCell.setCellStyle(row.getCell(cellIndex).getCellStyle());
-                newCell.setCellValue(jo.get(keyValue).toString());
+                JsonElement foo = jo.get(keyValue);
+                if (foo == null) {
+                    newCell.setCellValue("");
+                } else {
+                    newCell.setCellValue(foo.getAsString());
+                }
             }
         }
-        sheet.shiftRows(rowIndex, sheet.getLastRowNum(), -1);   // 删掉空行，删除起始行与结束行之间的空行，数量为-n
+        sheet.removeRow(row);
+        sheet.shiftRows(rowIndex + 1, sheet.getLastRowNum(), -1);   // 删掉空行，删除起始行与结束行之间的空行，数量为-n
         logger.info("导出数据:成功!共计" + total + "条!耗时" + (System.currentTimeMillis() / start) / 1000 + "秒!");
     }
 
