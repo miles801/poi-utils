@@ -1,6 +1,5 @@
 package com.michael.poi.exp;
 
-import com.sun.istack.internal.NotNull;
 
 /**
  * 批次数据
@@ -12,7 +11,6 @@ public class BatchData {
     private int start = 0;                      // 从多少条开始
     private int limit = 50;                 // 每次读取多少条数据
     private boolean isBatch = false;        // 是否是批次数据
-    @NotNull
     private DataInjector dataInjector;      // 数据注入器,每次注入一批数据
 
 

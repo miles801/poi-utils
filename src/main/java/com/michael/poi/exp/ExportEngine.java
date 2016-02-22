@@ -10,6 +10,7 @@ import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.util.IOUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
@@ -155,6 +156,18 @@ public class ExportEngine {
         }
         int limit = batchData.getLimit();
         int batch = 0;
+        // 是否为合并行
+        CellRangeAddress cra = null;
+        int mergedNum = sheet.getNumMergedRegions();
+        for (int i = 0; i < mergedNum; i++) {
+            CellRangeAddress address = sheet.getMergedRegion(i);
+            int rows = address.getFirstRow();
+            if (rowIndex == rows) {
+                cra = address;
+                break;
+            }
+        }
+
         for (int i = 0; i < total; i++) {
             if (i != 0 && i % limit == 0) {
                 logger.info("导出数据:动态加载批次数据(" + (i / limit) + "/" + (total / limit) + ")...");
@@ -166,13 +179,23 @@ public class ExportEngine {
             if (row.getRowStyle() != null) {
                 newRow.setRowStyle(row.getRowStyle());
             }
+            Row preRow = sheet.getRow(rowIndex + i);
+            // 是否为合并行
+            for (int tmp = preRow.getFirstCellNum(); tmp < preRow.getLastCellNum(); tmp++) {
+                Cell cell = newRow.createCell(tmp);
+                cell.setCellStyle(preRow.getCell(tmp).getCellStyle());
+            }
+            if (cra != null) {
+                int firstCol = cra.getFirstColumn();
+                int lastCol = cra.getLastColumn();
+                sheet.addMergedRegion(new CellRangeAddress(newRow.getRowNum(), newRow.getRowNum(), firstCol, lastCol));
+            }
             for (Map.Entry<Integer, String> entry : keyMap.entrySet()) {
                 int cellIndex = entry.getKey();
                 String keyValue = entry.getValue();
-                Cell newCell = newRow.createCell(cellIndex);
-                newCell.setCellStyle(row.getCell(cellIndex).getCellStyle());
+                Cell newCell = newRow.getCell(cellIndex);
                 JsonElement foo = jo.get(keyValue);
-                if (foo == null) {
+                if (foo == null || foo.isJsonNull()) {
                     newCell.setCellValue("");
                 } else {
                     newCell.setCellValue(foo.getAsString());
