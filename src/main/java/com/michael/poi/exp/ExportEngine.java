@@ -6,10 +6,7 @@ import com.google.gson.JsonObject;
 import org.apache.log4j.Logger;
 import org.apache.poi.POIXMLException;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.util.IOUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -29,6 +26,7 @@ import java.util.Map;
  *  $ 表示基本类型数据,通常配置方式为：$cc，会直接从JsonObject中获取
  *  # 表示数组、集合，通常配置方式为：#cc.xx，会从JsonObject指定对象（数组）中获取指定的属性值
  *  @ 表示内置变量  @col 跨列   @row 跨行 @color颜色 (暂未实现）
+ *  [] 表示写入图片  []中的内容为文件的访问路径
  *  </pre>
  *
  * @author Michael
@@ -130,6 +128,33 @@ public class ExportEngine {
                                 key = value.substring(1, value.lastIndexOf("."));
                                 String valueKey = value.substring(value.lastIndexOf(".") + 1);
                                 keyMap.put(cell.getColumnIndex(), valueKey);
+                            }
+                        } else if (value.matches("\\[\\w+\\]")) {
+                            // 图片
+                            cell.setCellValue("");  // 不管是否能够成功写入图片，都需要将当前单元格的模板内容给情况
+                            String filePath = value.substring(1, value.length() - 1);
+                            JsonElement o = data.get(filePath);
+                            if (o != null && !o.isJsonNull()) {
+                                File file = new File(o.getAsString());
+                                if (file.exists()) {
+                                    try {
+                                        // 写入图片
+                                        FileInputStream inputStream = new FileInputStream(file);
+                                        int index = workbook.addPicture(IOUtils.toByteArray(inputStream), Workbook.PICTURE_TYPE_JPEG);
+                                        inputStream.close();
+                                        CreationHelper creationHelper = workbook.getCreationHelper();
+                                        ClientAnchor clientAnchor = creationHelper.createClientAnchor();
+                                        clientAnchor.setCol1(cell.getColumnIndex());
+                                        clientAnchor.setRow1(cell.getRowIndex());
+                                        Drawing drawing = sheet.createDrawingPatriarch();
+                                        Picture picture = drawing.createPicture(clientAnchor, index);
+                                        picture.resize();
+                                    } catch (FileNotFoundException e) {
+                                        e.printStackTrace();
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
                             }
                         }
                     }
