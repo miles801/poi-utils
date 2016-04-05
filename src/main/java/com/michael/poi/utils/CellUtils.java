@@ -32,8 +32,12 @@ public class CellUtils {
                 cellValue = DateUtil.getJavaDate(cell.getNumericCellValue());
             } else if (cell.toString().matches("\\d+\\.0")) {   // 整形
                 Double tmp = cell.getNumericCellValue();
-                DecimalFormat decimalFormat = new DecimalFormat("##");
-                cellValue = Integer.parseInt(decimalFormat.format(tmp));
+                if (cell.getCellStyle().getDataFormat() > 0) {  // 也是时间类型
+                    cellValue = DateUtil.getJavaDate(tmp);
+                } else {
+                    DecimalFormat decimalFormat = new DecimalFormat("##");
+                    cellValue = Integer.parseInt(decimalFormat.format(tmp));
+                }
             } else {
                 cellValue = cell.getNumericCellValue();
             }
