@@ -38,7 +38,7 @@ public class TypeUtils {
                 return Float.parseFloat(value);
             } else {
                 // 去0操作
-                String noDotValue = value.replaceAll("\\.+", "");
+                String noDotValue = value.replaceAll("\\.+.+", "");
                 if (fieldClass.isAssignableFrom(Integer.class)) {
                     return Integer.parseInt(noDotValue);
                 } else if (fieldClass.isAssignableFrom(Long.class)) {
@@ -51,7 +51,9 @@ public class TypeUtils {
             return Boolean.parseBoolean(value);
         } else if (fieldClass.isAssignableFrom(Date.class)) {
             try {
-                if (value.matches("\\d+")) {
+                if (cellValue instanceof Date) {
+                    return cellValue;
+                } else if (value.matches("\\d+")) {
                     return new Date(Long.parseLong(value));
                 } else if (value.matches("yyyy-MM-dd")) {
                     return new SimpleDateFormat("yyyy-mm-dd").parse(value);
