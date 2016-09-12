@@ -25,28 +25,31 @@ public class TypeUtils {
             throw new RuntimeException("目标类型不可为空!");
         }
         String value = cellValue.toString();
+        if ("".equals(value)) {
+            return null;
+        }
         if (fieldClass.isAssignableFrom(String.class)) {
             // 解决科学计数法的问题
             if (value.matches("\\d\\.\\d+E\\d+")) {
                 return new BigDecimal(value).toPlainString();
             }
             return value;
-        } else if (cellValue instanceof Number) {
-            if (fieldClass.isAssignableFrom(Double.class)) {
-                return Double.parseDouble(value);
-            } else if (fieldClass.isAssignableFrom(Float.class)) {
-                return Float.parseFloat(value);
-            } else {
-                // 去0操作
-                String noDotValue = value.replaceAll("\\.+.+", "");
-                if (fieldClass.isAssignableFrom(Integer.class)) {
-                    return Integer.parseInt(noDotValue);
-                } else if (fieldClass.isAssignableFrom(Long.class)) {
-                    return Long.parseLong(noDotValue);
-                } else if (fieldClass.isAssignableFrom(Short.class)) {
-                    return Short.parseShort(noDotValue);
-                }
-            }
+        } else if (fieldClass.isAssignableFrom(Double.class)) {
+            return Double.parseDouble(value);
+        } else if (fieldClass.isAssignableFrom(Float.class)) {
+            return Float.parseFloat(value);
+        } else if (fieldClass.isAssignableFrom(Integer.class)) {
+            // 去0操作
+            String noDotValue = value.replaceAll("\\.+.+", "");
+            return Integer.parseInt(noDotValue);
+        } else if (fieldClass.isAssignableFrom(Long.class)) {
+            // 去0操作
+            String noDotValue = value.replaceAll("\\.+.+", "");
+            return Long.parseLong(noDotValue);
+        } else if (fieldClass.isAssignableFrom(Short.class)) {
+            // 去0操作
+            String noDotValue = value.replaceAll("\\.+.+", "");
+            return Short.parseShort(noDotValue);
         } else if (fieldClass.isAssignableFrom(Boolean.class)) {
             return Boolean.parseBoolean(value);
         } else if (fieldClass.isAssignableFrom(Date.class)) {
