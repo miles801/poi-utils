@@ -50,6 +50,7 @@ public class AnnotationCfgAdapter implements Adapter {
             mapping.setIndex(col.index());
             mapping.setColName(field.getName());
             mapping.setRequired(col.required());
+            mapping.setPreRowIfNull(col.preIfNull());
             FieldConvert fieldConvert = field.getAnnotation(FieldConvert.class);
             if (fieldConvert != null) {
                 try {
