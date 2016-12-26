@@ -227,7 +227,7 @@ public class ExportEngine {
                 } else if ("@index".equals(keyValue)) { // 序号
                     foo = new JsonPrimitive(i + 1);
                 } else {                                // 获取对象
-                    foo = arr.getAsJsonObject().get(keyValue);
+                    foo = arr.get(i).getAsJsonObject().get(keyValue);
                 }
                 if (foo == null || foo.isJsonNull()) {
                     newCell.setCellValue("");
